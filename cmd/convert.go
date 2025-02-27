@@ -11,7 +11,6 @@ import (
 
 	template "github.com/openshift/api/template/v1"
 	"github.com/spf13/cobra"
-	"github.com/stoewer/go-strcase"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -165,38 +164,38 @@ func objectToTemplate(objects *[]runtime.RawExtension, templateLabels *map[strin
 
 func paramsToValues(param *[]template.Parameter, values *map[string]interface{}, templates *[]*chart.File) error {
 
-	p := *param
-	t := *templates
-	v := *values
+    p := *param
+    t := *templates
+    v := *values
 
-	for _, pm := range p {
-		name := strcase.LowerCamelCase(pm.Name)
-		log.Printf("Convert parameter %s to value .%s", pm.Name, name)
+    for _, pm := range p {
+        name := pm.Name
+        log.Printf("Convert parameter %s to value .%s", pm.Name, name)
 
-		for i, tf := range t {
-			// Search and replace ${PARAM} with {{ .Values.param }}
-			raw := tf.Data
-			// Handle string format parameters
-			ns := strings.ReplaceAll(string(raw), fmt.Sprintf("${%s}", pm.Name), fmt.Sprintf("{{ .Values.%s }}", name))
-			// TODO Handle binary formatted data differently
-			ns = strings.ReplaceAll(ns, fmt.Sprintf("${{%s}}", pm.Name), fmt.Sprintf("{{ .Values.%s }}", name))
-			ntf := chart.File{
-				Name: tf.Name,
-				Data: []byte(ns),
-			}
+        for i, tf := range t {
+            // Search and replace ${PARAM} with {{ .Values.param }}
+            raw := tf.Data
+            // Handle string format parameters
+            ns := strings.ReplaceAll(string(raw), fmt.Sprintf("${%s}", pm.Name), fmt.Sprintf("{{ .Values.%s }}", name))
+            // TODO Handle binary formatted data differently
+            ns = strings.ReplaceAll(ns, fmt.Sprintf("${{%s}}", pm.Name), fmt.Sprintf("{{ .Values.%s }}", name))
+            ntf := chart.File{
+                Name: tf.Name,
+                Data: []byte(ns),
+            }
 
-			t[i] = &ntf
-		}
+            t[i] = &ntf
+        }
 
-		if pm.Value != "" {
-			v[name] = pm.Value
-		} else {
-			v[name] = "# TODO: must define a default value for ." + name
-		}
-	}
+        if pm.Value != "" {
+            v[name] = pm.Value
+        } else {
+            v[name] = "# TODO: must define a default value for ." + name
+        }
+    }
 
-	*templates = t
-	*values = v
+    *templates = t
+    *values = v
 
-	return nil
-}
+    return nil
+}         
